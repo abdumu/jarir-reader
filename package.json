@@ -1,7 +1,7 @@
 {
   "name": "jarir-reader",
   "icon": "./ui/images/jarir-logo.png",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "تحميل كتب قارئ جرير وتحويلها لكتب عادية غير مشفرة",
   "main": "ui/index.js",
   "scripts": {
