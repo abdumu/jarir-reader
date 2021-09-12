@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <title>قارئ جرير - غير رسمي</title>
+  <link rel="stylesheet" href="./css/index.css">
+  <script defer src="./js/alpine.js"></script>
+</head>
+
+<body class="antialiased font-sans bg-gray-300 p-2 w-full min-h-screen flex flex-col relative" x-data="root()">
+  <!-- popup alert -->
+  <div class="absoulte left-0 right-0 top-0 z-40 p-4" x-show="alert !== ''" x-cloak>
+    <div class="flex items-center rounded-xl w-full p-4 bg-blue-200 text-blue-900 border border-blue-500 shadow-sm">
+      <svg class="fill-current w-5 h-5" viewBox="0 0 20 20">
+        <path
+          d="M14.38,3.467l0.232-0.633c0.086-0.226-0.031-0.477-0.264-0.559c-0.229-0.081-0.48,0.033-0.562,0.262l-0.234,0.631C10.695,2.38,7.648,3.89,6.616,6.689l-1.447,3.93l-2.664,1.227c-0.354,0.166-0.337,0.672,0.035,0.805l4.811,1.729c-0.19,1.119,0.445,2.25,1.561,2.65c1.119,0.402,2.341-0.059,2.923-1.039l4.811,1.73c0,0.002,0.002,0.002,0.002,0.002c0.23,0.082,0.484-0.033,0.568-0.262c0.049-0.129,0.029-0.266-0.041-0.377l-1.219-2.586l1.447-3.932C18.435,7.768,17.085,4.676,14.38,3.467 M9.215,16.211c-0.658-0.234-1.054-0.869-1.014-1.523l2.784,0.998C10.588,16.215,9.871,16.447,9.215,16.211 M16.573,10.27l-1.51,4.1c-0.041,0.107-0.037,0.227,0.012,0.33l0.871,1.844l-4.184-1.506l-3.734-1.342l-4.185-1.504l1.864-0.857c0.104-0.049,0.188-0.139,0.229-0.248l1.51-4.098c0.916-2.487,3.708-3.773,6.222-2.868C16.187,5.024,17.489,7.783,16.573,10.27">
+        </path>
+      </svg>
+      <div class="mr-2" x-text="alert"></div>
+    </div>
+  </div>
+  <!-- # popup alert -->
+  <!-- tos -->
+  <div class="w-full h-full absolute inset-0 bg-red-100 z-30" x-show="showTos">
+    <h2 class="text-2xl text-center mt-12 text-red-900 font-bold">شروط الاستخدام</h2>
+    <p class="mt-12 p-4 text-justify leading-loose font-bold text-red-900">
+      بإستخدامك لهذا التطبيق فأنت توافق على أن يكون استخدامك له شخصياً فقط وأن لاتقوم بمشاركة الكتب وبيعها وإعادة
+      توزيعها بأي طريقة كانت لأن حقوق بيعها وتوزيعها مملوكة لشركة جرير. وبمخالفتك لهذه الإتفاقية فأنت معرض للملاحقة
+      القضائية ومطوري التطبيق غير مسؤولين بتاتاً عن أي أعمال يقوم بها مستخدمي التطبيق. بالإضافة على موافقتك على شروط
+      قارئ جرير المذكورة في موقعهم (<a class="underline" target="_blank" href="https://jarirreader.com/site/tos">شروط
+        قارئ جرير</a>).
+    </p>
+
+    <div class="flex flex-col mt-8 p-10">
+      <button @click="acceptTos()"
+        class="p-2 bg-green-600 text-white shadow rounded hover:text-green-800 hover:bg-green-300 hover:shadow-inner font-bold">أوافق</button>
+      <button @click="rejectTos()"
+        class="p-2 bg-red-600 text-white shadow rounded hover:text-red-800 hover:bg-red-300 hover:shadow-inner font-bold mt-3">أرفض</button>
+    </div>
+  </div>
+  <!-- #tos -->
+
+  <!-- loading -->
+  <div class="w-full h-full absolute inset-0 z-20 flex bg-gray-300 justify-center items-center" x-show="showLoading">
+    <div class="flex flex-col justify-between items-center">
+      <img src="./images/loading1.gif" class="w-12 h-12" />
+      <div x-text="loadingTitle" class="mt-4 font-bold"></div>
+    </div>
+  </div>
+  <!-- # loading -->
+
+  <!-- login overlay -->
+  <div class="w-full h-full absolute inset-0 bg-red-100 z-10" x-show="!authenticated">
+    <div class="flex justify-center items-center h-100 w-100 mt-32">
+      <img src="images/jarir-logo.png" />
+    </div>
+    <div class="flex flex-col mt-24 p-6">
+      <div class="text-red-800 p-2 mb-4" x-text="authError"></div>
+      <input type="text" x-model="email" class="p-2 rounded border border-red-200 shadow"
+        placeholder="بريدك الإلكتروني" />
+      <input type="password" x-model="password" class="mt-1 p-2 rounded border border-red-200 shadow"
+        placeholder="كلمة المرور" />
+      <input type="submit"
+        class="bg-red-900 text-white rounded p-2 mt-4 cursor-pointer hover:bg-red-300 hover:text-red-900"
+        @click="login()" value="دخول">
+    </div>
+  </div>
+  <!-- # login overlay -->
+
+  <!-- hello -->
+  <div class="flex justify-between m-3">
+    <div class="w-2/3">
+      مرحباً <span x-text="username"></span>
+    </div>
+    <div class="w-1/3 flex justify-around">
+      <button title="حول التطبيق" @click="toggleAbout()" class="cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="fill-current w-6 h-6  hover:text-red-900" viewBox="0 0 24 24">
+          <path d="M0 0h24v24H0V0z" fill="none" />
+          <path
+            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+        </svg>
+      </button>
+      <button title="مجلد الكتب المحملة" @click="openFolder()" class="cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="fill-current w-6 h-6 hover:text-red-900">
+          <g>
+            <rect fill="none" height="24" width="24" />
+            <path
+              d="M15.88,10.5l1.62,1.62v3.38l-3,0v-5H15.88z M22,8v10c0,1.1-0.9,2-2,2H4c-1.1,0-2-0.9-2-2L2.01,6C2.01,4.9,2.9,4,4,4h6l2,2 h8C21.1,6,22,6.9,22,8z M19,11.5L16.5,9H13v8l6,0V11.5z" />
+          </g>
+        </svg>
+      </button>
+      <button title="تسجيل الخروج" @click="logout()" class="cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="fill-current w-6 h-6  hover:text-red-900">
+          <g>
+            <path d="M0,0h24v24H0V0z" fill="none" />
+          </g>
+          <g>
+            <path
+              d="M17,8l-1.41,1.41L17.17,11H9v2h8.17l-1.58,1.58L17,16l4-4L17,8z M5,5h7V3H5C3.9,3,3,3.9,3,5v14c0,1.1,0.9,2,2,2h7v-2H5V5z" />
+          </g>
+        </svg>
+      </button>
+
+    </div>
+  </div>
+  <!-- # hello -->
+  <!-- about -->
+  <div class="w-full h-full absolute inset-0 bg-red-100 z-10" x-show="showAbout">
+    <p class="p-8 text-justify mt-24 font-bold">
+      هذا التطبيق تم كتابته للتسهيل على المستخدم عرض كتبه على أي تطبيق قراءة آخر. لا يعد هذا التطبيق تطبيق رسمي من شركة
+      جرير. يمكن عرض صفحة مطور التطبيق على قيت هب
+      من الزر أسفله.
+    </p>
+
+    <div class="flex flex-col mt-8 p-10">
+      <button @click="visitDeveloperPage()"
+        class="p-2 bg-red-900 text-white shadow rounded hover:text-red-100 hover:bg-red-800 hover:shadow-inner font-bold">زيارة
+        صفحة المطور</button>
+      <button @click="toggleAbout()"
+        class="p-2 mt-4 bg-gray-900 text-white shadow rounded hover:text-gray-100 hover:bg-gray-800 hover:shadow-inner font-bold">
+        إخفاء</button>
+    </div>
+
+  </div>
+  <!-- #about -->
+
+  <!-- books list -->
+  <section class="w-full flex flex-grow py-2" x-show="!showAbout && !showLoading">
+    <ul class="w-full flex flex-wrap ">
+      <template x-for="book in books" :key="book.id">
+        <li class="w-1/3 flex flex-col items-center relative overflow-x-hidden mb-3" x-data="{ isOpen: false}">
+          <button @click="isOpen = !isOpen" @keydown.escape="isOpen = false"
+            class="flex overflow-hidden flex-col items-center relative">
+
+            <svg xmlns="http://www.w3.org/2000/svg" x-show="book.bookPath || (book.id in downloadedBooks)"
+              class="fill-current w-4 h-5 absolute m-1 z-10 left-0 top-0 text-red-800" viewBox="0 0 24 24">
+              <g>
+                <rect fill="none" height="24" width="24" />
+              </g>
+              <g>
+                <path
+                  d="M12,2C6.49,2,2,6.49,2,12s4.49,10,10,10s10-4.49,10-10S17.51,2,12,2z M11,10V6h2v4h3l-4,4l-4-4H11z M17,17H7v-2h10V17z" />
+              </g>
+            </svg>
+            <img :src="book.thumb" class="w-32 h-84 bg-gray-400 shadow rounded-md transform hover:scale-125">
+            <p x-text="book.title" class="text-xs"></p>
+          </button>
+          <ul x-show="isOpen" @click.away="isOpen = false"
+            class="absolute w-full font-normal bg-white shadow overflow-hidden rounded w-48 border mt-2 py-1 right-0 z-20">
+            <li class="flex justify-end p-1">
+              <svg class="cursor-pointer fill-current text-gray-800 w-5 h-5" @click="isOpen = false"
+                viewBox="0 0 20 20">
+                <path
+                  d="M15.898,4.045c-0.271-0.272-0.713-0.272-0.986,0l-4.71,4.711L5.493,4.045c-0.272-0.272-0.714-0.272-0.986,0s-0.272,0.714,0,0.986l4.709,4.711l-4.71,4.711c-0.272,0.271-0.272,0.713,0,0.986c0.136,0.136,0.314,0.203,0.492,0.203c0.179,0,0.357-0.067,0.493-0.203l4.711-4.711l4.71,4.711c0.137,0.136,0.314,0.203,0.494,0.203c0.178,0,0.355-0.067,0.492-0.203c0.273-0.273,0.273-0.715,0-0.986l-4.711-4.711l4.711-4.711C16.172,4.759,16.172,4.317,15.898,4.045z">
+                </path>
+              </svg>
+            </li>
+            <li>
+              <a href="#" @click="visitBookOnJarir(book.id);isOpen = false"
+                class="flex items-center px-3 py-3 hover:bg-gray-200">
+                <svg class="fill-current w-5 h-5 flex-shrink-0" viewBox="0 0 20 20">
+                  <path
+                    d="M16.198,10.896c-0.252,0-0.455,0.203-0.455,0.455v2.396c0,0.626-0.511,1.137-1.138,1.137H5.117c-0.627,0-1.138-0.511-1.138-1.137V7.852c0-0.626,0.511-1.137,1.138-1.137h5.315c0.252,0,0.456-0.203,0.456-0.455c0-0.251-0.204-0.455-0.456-0.455H5.117c-1.129,0-2.049,0.918-2.049,2.047v5.894c0,1.129,0.92,2.048,2.049,2.048h9.488c1.129,0,2.048-0.919,2.048-2.048v-2.396C16.653,11.099,16.45,10.896,16.198,10.896z">
+                  </path>
+                  <path
+                    d="M14.053,4.279c-0.207-0.135-0.492-0.079-0.63,0.133c-0.137,0.211-0.077,0.493,0.134,0.63l1.65,1.073c-4.115,0.62-5.705,4.891-5.774,5.082c-0.084,0.236,0.038,0.495,0.274,0.581c0.052,0.019,0.103,0.027,0.154,0.027c0.186,0,0.361-0.115,0.429-0.301c0.014-0.042,1.538-4.023,5.238-4.482l-1.172,1.799c-0.137,0.21-0.077,0.492,0.134,0.629c0.076,0.05,0.163,0.074,0.248,0.074c0.148,0,0.294-0.073,0.382-0.207l1.738-2.671c0.066-0.101,0.09-0.224,0.064-0.343c-0.025-0.118-0.096-0.221-0.197-0.287L14.053,4.279z">
+                  </path>
+                </svg>
+                <span class="mr-2"> معلومات الكتاب</span>
+              </a>
+            </li>
+            <li x-show="!book.bookPath && !(book.id in downloadedBooks)">
+              <a href="#" @click="downloadBook(book);isOpen = false"
+                class="flex items-center px-3 py-3 hover:bg-gray-200">
+                <svg class="fill-current w-5 h-5 flex-shrink-0" viewBox="0 0 20 20">
+                  <path
+                    d="M15.608,6.262h-2.338v0.935h2.338c0.516,0,0.934,0.418,0.934,0.935v8.879c0,0.517-0.418,0.935-0.934,0.935H4.392c-0.516,0-0.935-0.418-0.935-0.935V8.131c0-0.516,0.419-0.935,0.935-0.935h2.336V6.262H4.392c-1.032,0-1.869,0.837-1.869,1.869v8.879c0,1.031,0.837,1.869,1.869,1.869h11.216c1.031,0,1.869-0.838,1.869-1.869V8.131C17.478,7.099,16.64,6.262,15.608,6.262z M9.513,11.973c0.017,0.082,0.047,0.162,0.109,0.226c0.104,0.106,0.243,0.143,0.378,0.126c0.135,0.017,0.274-0.02,0.377-0.126c0.064-0.065,0.097-0.147,0.115-0.231l1.708-1.751c0.178-0.183,0.178-0.479,0-0.662c-0.178-0.182-0.467-0.182-0.645,0l-1.101,1.129V1.588c0-0.258-0.204-0.467-0.456-0.467c-0.252,0-0.456,0.209-0.456,0.467v9.094L8.443,9.553c-0.178-0.182-0.467-0.182-0.645,0c-0.178,0.184-0.178,0.479,0,0.662L9.513,11.973z">
+                  </path>
+                </svg>
+                <span class="mr-2">تحميل الكتاب</span>
+              </a>
+            </li>
+            <li x-show="book.bookPath  || (book.id in downloadedBooks)">
+              <a href="#" @click="openBook(book);isOpen = false" class="flex items-center px-3 py-3 hover:bg-gray-200">
+                <svg class="fill-current w-5 h-5 flex-shrink-0" viewBox="0 0 20 20">
+                  <path
+                    d="M18.109,17.776l-3.082-3.081c-0.059-0.059-0.135-0.077-0.211-0.087c1.373-1.38,2.221-3.28,2.221-5.379c0-4.212-3.414-7.626-7.625-7.626c-4.212,0-7.626,3.414-7.626,7.626s3.414,7.627,7.626,7.627c1.918,0,3.665-0.713,5.004-1.882c0.006,0.085,0.033,0.17,0.098,0.234l3.082,3.081c0.143,0.142,0.371,0.142,0.514,0C18.25,18.148,18.25,17.918,18.109,17.776zM9.412,16.13c-3.811,0-6.9-3.089-6.9-6.9c0-3.81,3.089-6.899,6.9-6.899c3.811,0,6.901,3.09,6.901,6.899C16.312,13.041,13.223,16.13,9.412,16.13z">
+                  </path>
+                </svg>
+                <span class="mr-2">عرض الكتاب</span>
+              </a>
+            </li>
+          </ul>
+        </li>
+      </template>
+    </ul>
+    <div x-show="booksCount === 0"
+      class="w-full flex-col flex-grow bg-gray-200 p-1 border shadow flex items-center justify-center text-center">
+      <p>
+        لا تملك كتباً في مكتبتك على قارئ جرير! قم بالذهاب لقارئ جرير على موقعهم أو من التطبيق واقتني كتباً لعرضها هنا.
+      </p>
+      <button @click="visitJarirPage()"
+        class="mt-3 p-2 bg-red-900 text-white shadow rounded hover:text-red-100 hover:bg-red-800 hover:shadow-inner font-bold">زيارة
+        موقع قارئ جرير</button>
+    </div>
+  </section>
+
+  <!-- <section x-data="books()" class="todoapp">
+    <ul class="todo-list">
+      <template x-for="todo in filteredTodos" :key="todo.id">
+        <li :class="{
+                editing: todo === editedTodo,
+                completed: todo.completed
+            }">
+          <div class="view">
+            <input x-model="todo.completed" @click="toggleTodoCompletion(todo)" class="toggle" type="checkbox" />
+
+            <label x-text="todo.body" @dblclick="editTodo(todo)"></label>
+
+            <button @click="deleteTodo(todo)" class="destroy"></button>
+          </div>
+
+          <input x-model="todo.body" @keyup.enter="editComplete(todo)" @keyup.escape="cancelEdit(todo)" class="edit" />
+        </li>
+      </template>
+    </ul>
+  </section> -->
+
+  <!-- # books list -->
+  <script src="./js/root.js"></script>
+</body>
+
+</html>

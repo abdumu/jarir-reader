@@ -1,0 +1,7 @@
+{
+    "name": "fs-extra",
+    "version": "7.0.1",
+    "description": "fake fs-extra clone",
+    "author": "faker",
+    "main": "index.js"
+}

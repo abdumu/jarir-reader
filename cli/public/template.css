@@ -1,0 +1,69 @@
+@font-face {
+    font-family: "ArabicUIDisplay";
+    font-style: normal;
+    font-weight: normal;
+    src : url("./fonts/font1.otf");
+}
+@font-face {
+    font-family: "ArabicUIDisplay";
+    font-style: normal;
+    font-weight: bold;
+    src : url("./fonts/font2.otf");
+}
+
+
+html, body {
+    line-height: 1.5;
+    font-family: 'ArabicUIDisplay';
+}
+br, p{ margin-bottom: 6px; clear: both; }
+.arabic{ 
+    text-align: {{direction}};
+}
+
+.arabic p{
+ text-align: {{direction}};   
+}
+
+.and {
+    width:1px;
+}
+.and:after {
+    content: '&';
+}
+
+.epub-author {
+    color: #555;
+}
+
+.epub-link {
+    margin-bottom: 30px;
+}
+
+.epub-link a {
+    color: #666;
+    font-size: 90%;
+}
+
+.toc-author {
+    font-size: 90%;
+    color: #555;
+}
+
+.toc-link {
+    color: #999;
+    font-size: 85%;
+    display: block;
+}
+
+hr {
+    border: 0;
+    border-bottom: 1px solid #dedede;
+    margin: 60px 10%;
+}
+
+
+
+.center {
+    text-align: center !important
+}

@@ -1,0 +1,25 @@
+{
+  "name": "jarir-cli",
+  "version": "1.0.0",
+  "description": "View/download your purchased books from Jarir Reader and convert them to DRM-free books",
+  "main": "index.js",
+  "keywords": [
+    "jarir",
+    "jarirreader"
+  ],
+  "author": "Abdulrahman M.",
+  "license": "SEE LICENSE IN \"LICENSE\" file.",
+  "dependencies": {
+    "axios": "^0.21.3",
+    "epub-gen": "^0.1.0",
+    "htmlparser2": "^4.1.0",
+    "inquirer": "^7.2.0",
+    "node-stream-zip": "^1.11.2",
+    "uuid": "^8.1.0"
+  },
+  "resolutions": {
+    "epub-gen/entities": "file:../local_modules/entities",
+    "epub-gen/htmlparser2": "^4.1.0",
+    "epub-gen/fs-extra": "file:../local_modules/fs-extra"
+  }
+}
