@@ -34,4 +34,16 @@ module.exports = {
         },
     ],
     hooks: {},
+    publishers: [
+        {
+            name: "@electron-forge/publisher-github",
+            config: {
+                repository: {
+                    owner: "abdumu",
+                    name: "jarir-reader",
+                },
+                draft: true,
+            },
+        },
+    ],
 };
