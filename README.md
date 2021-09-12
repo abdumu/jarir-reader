@@ -19,3 +19,5 @@ You can use it also in cli mode, run it as jarir-reader --cli
 </p>
 
 ## License
+
+Check [LICENSE file](./LICENSE) for more details.
