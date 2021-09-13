@@ -53,17 +53,24 @@ const auth = (email, password) => {
         if (typeof email === "undefined") {
             settings = getSettings();
 
-            if (settings === null || !settings.hasOwnProperty("email") || !settings.hasOwnProperty("password")) {
-                const invalidErr = new Error("(503) Email & password are not set! Please re-run the command again!");
+            if (settings === null || !(settings.hasOwnProperty("auth") && settings.hasOwnProperty("expires"))) {
+                const invalidErr = new Error("(503) auth & expires are not set! Please re-run the command again!");
                 invalidErr.code = 503;
                 reject(invalidErr);
                 return;
-            }
-
-            if (settings !== null && settings.hasOwnProperty("auth") && settings.hasOwnProperty("expires")) {
+            } else {
                 const expires = Number(settings.expires);
                 if (expires > Date.now()) {
                     resolve(settings.auth);
+                    return;
+                } else {
+                    setSettings({
+                        auth: null,
+                        expires: null,
+                    });
+                    const invalidErr = new Error("(503) auth has expired! Please re-run the command again!");
+                    invalidErr.code = 503;
+                    reject(invalidErr);
                     return;
                 }
             }

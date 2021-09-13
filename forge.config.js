@@ -8,6 +8,8 @@ module.exports = {
                 name: "jarir-reader",
                 genericName: "Jarir Reader",
                 icon: "./ui/images/jarir-logo.ico",
+                setupIcon: "./ui/images/jarir-logo.ico",
+                iconUrl: "./ui/images/jarir-logo.ico",
             },
         },
         {

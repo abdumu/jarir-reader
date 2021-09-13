@@ -4,7 +4,6 @@ const path = require("path");
 const { auth, getUserBooks, downloadAndGenerateBook, getAppDataPath, getSettings, logoutFromApp, initiateCli } = require("jarir-cli");
 
 if (require("electron-squirrel-startup")) {
-    getApp;
     app.quit();
 }
 
@@ -20,6 +19,7 @@ const createWindow = () => {
         resizable: false,
         webPreferences: {
             preload: path.join(__dirname, "js/preload.js"),
+            nativeWindowOpen: true,
         },
     });
 
@@ -51,6 +51,8 @@ const createWindow = () => {
             shell.openExternal("https://github.com/abdumu");
         } else if (action === "jarirPage") {
             shell.openExternal("https://jarirreader.com");
+        } else if (action === "jarirTOS") {
+            shell.openExternal("hhttps://jarirreader.com/site/tos");
         }
     });
     ipcMain.handle("simple", async (event, action) => {

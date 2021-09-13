@@ -51,7 +51,9 @@ window.root = () => {
         rejectTos() {
             window.actions.rejectTos();
         },
-
+        visitJarirTOS() {
+            window.actions.openJarirTOS();
+        },
         /**
          * Login
          */

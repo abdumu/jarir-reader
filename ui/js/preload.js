@@ -25,6 +25,9 @@ contextBridge.exposeInMainWorld("actions", {
     openJarirPage() {
         ipcRenderer.send("base", "jarirPage");
     },
+    openJarirTOS() {
+        ipcRenderer.send("base", "jarirTOS");
+    },
     visitBookPage(bookId) {
         ipcRenderer.send("visitBook", bookId);
     },

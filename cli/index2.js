@@ -57,8 +57,8 @@ const askForCredentials = () => {
                         .catch((error) => inquirerErrorLog(error));
                 } else {
                     setSettings({
-                        email: null,
-                        password: null,
+                        auth: null,
+                        expires: null,
                     }).then(() => {
                         askForCredentials();
                     });
