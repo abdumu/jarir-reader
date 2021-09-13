@@ -9,24 +9,18 @@ module.exports = {
                 genericName: "Jarir Reader",
                 icon: "./ui/images/jarir-logo.ico",
                 setupIcon: "./ui/images/jarir-logo.ico",
-                iconUrl: "./ui/images/jarir-logo.ico",
+                iconUrl: "https://raw.githubusercontent.com/abdumu/jarir-reader/master/ui/images/jarir-logo.ico",
             },
         },
         {
-            name: "@electron-forge/maker-zip",
-            platforms: ["darwin"],
-        },
-        {
-            name: "@electron-forge/maker-deb",
+            name: "@electron-forge/maker-dmg",
             config: {
-                productName: "قارئ جرير",
-                name: "jarir-reader",
-                genericName: "Jarir Reader",
+                format: "ULFO",
                 icon: "./ui/images/jarir-logo.png",
             },
         },
         {
-            name: "@electron-forge/maker-rpm",
+            name: "@electron-forge/maker-deb",
             config: {
                 productName: "قارئ جرير",
                 name: "jarir-reader",

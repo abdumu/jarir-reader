@@ -52,7 +52,7 @@ const createWindow = () => {
         } else if (action === "jarirPage") {
             shell.openExternal("https://jarirreader.com");
         } else if (action === "jarirTOS") {
-            shell.openExternal("hhttps://jarirreader.com/site/tos");
+            shell.openExternal("https://jarirreader.com/site/tos");
         }
     });
     ipcMain.handle("simple", async (event, action) => {

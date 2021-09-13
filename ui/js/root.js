@@ -4,6 +4,19 @@ window.root = () => {
         username: "...",
         loadingTitle: "",
         alert: "",
+        lastIncrement: 1,
+
+        xDelay(val, ms, increment) {
+            if (increment) {
+                this.lastIncrement = this.lastIncrement + 0.5;
+            }
+            console.log(ms * (increment ? this.lastIncrement - 1 : 1));
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(val);
+                }, ms * (increment ? this.lastIncrement - 1 : 1));
+            });
+        },
 
         async init() {
             this.downloadedBooks = Alpine.reactive({});

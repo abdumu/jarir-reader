@@ -69,7 +69,8 @@
   <!-- # login overlay -->
 
   <!-- hello -->
-  <div class="flex justify-between m-3">
+  <div
+    class="flex justify-between m-3 fixed right-0 top-0 w-full h-10 bg-gray-300 z-10 -m-1 p-3 border-b border-gray-500">
     <div class="w-2/3">
       مرحباً <span x-text="username"></span>
     </div>
@@ -126,11 +127,11 @@
   <!-- #about -->
 
   <!-- books list -->
-  <section class="w-full flex flex-grow py-2" x-show="!showAbout && !showLoading">
+  <section class="w-full flex flex-grow py-2 mt-10" x-show="!showAbout && !showLoading">
     <ul class="w-full flex flex-wrap ">
       <template x-for="book in books" :key="book.id">
         <li class="w-1/3 flex flex-col items-center relative overflow-x-hidden mb-3" x-data="{ isOpen: false}">
-          <button @click="isOpen = !isOpen" @keydown.escape="isOpen = false"
+          <div @click="isOpen = !isOpen" @keydown.escape="isOpen = false"
             class="flex overflow-hidden flex-col items-center relative">
 
             <svg xmlns="http://www.w3.org/2000/svg" x-show="book.bookPath || (book.id in downloadedBooks)"
@@ -143,9 +144,23 @@
                   d="M12,2C6.49,2,2,6.49,2,12s4.49,10,10,10s10-4.49,10-10S17.51,2,12,2z M11,10V6h2v4h3l-4,4l-4-4H11z M17,17H7v-2h10V17z" />
               </g>
             </svg>
-            <img :src="book.thumb" class="w-32 h-84 bg-gray-400 shadow rounded-md transform hover:scale-125">
-            <p x-text="book.title" class="text-xs"></p>
-          </button>
+
+            <!-- book cover -->
+            <div class="w-32 h-48 border-2 rounded-md">
+              <div class="flex flex-col items-center h-full p-2" x-data="{ showIt: false }"
+                x-init="xDelay(true, 500, true).then(x => showIt = x)" :class="showIt ? '' : 'animate-pulse'">
+                <div class="bg-gray-600 h-5/6 w-full rounded">
+                  <img :src="book.thumb" x-show="showIt"
+                    class="w-full h-full bg-gray-400 shadow overflow-hidden transform hover:scale-125" />
+                </div>
+                <div class="w-full bg-gray-400 h-1/6 rounded-md mt-3 text-center">
+                  <p x-text="book.title" x-show="showIt" :title="book.title"
+                    class="text-xs h-full truncate overflow-ellipsis overflow-hidden"></p>
+                </div>
+              </div>
+            </div>
+            <!-- # book cover -->
+          </div>
           <ul x-show="isOpen" @click.away="isOpen = false"
             class="absolute w-full font-normal bg-white shadow overflow-hidden rounded w-48 border mt-2 py-1 right-0 z-20">
             <li class="flex justify-end p-1">
