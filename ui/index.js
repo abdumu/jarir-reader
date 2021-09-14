@@ -61,7 +61,9 @@ const createWindow = () => {
         } else if (action === "pre_auth") {
             return await auth();
         } else if (action === "logout") {
-            return await logoutFromApp();
+            logoutFromApp().then(() => {
+                mainWindow.close();
+            });
         } else if (action === "books") {
             return await getUserBooks();
         }
