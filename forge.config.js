@@ -28,6 +28,15 @@ module.exports = {
                 icon: "./ui/images/jarir-logo.png",
             },
         },
+        {
+            name: "@electron-forge/maker-rpm",
+            config: {
+                productName: "قارئ جرير",
+                name: "jarir-reader",
+                genericName: "Jarir Reader",
+                icon: "./ui/images/jarir-logo.png",
+            },
+        },
     ],
     hooks: {},
     publishers: [
