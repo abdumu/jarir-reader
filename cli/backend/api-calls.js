@@ -45,6 +45,7 @@ const requestTime = () => {
 
 const http = axios.create({
     baseURL: "https://api.jarirreader.com",
+    // baseURL: "https://api.yaqut.me", //rufoof
     httpsAgent: new https.Agent({
         rejectUnauthorized: false,
         KeepAlive: true,
@@ -53,6 +54,7 @@ const http = axios.create({
 http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
 http.defaults.headers.post["User-Agent"] = "okhttp/4.3.1";
 http.defaults.headers.post["Host"] = "api.jarirreader.com";
+// http.defaults.headers.post["Host"] = "api.yaqut.me"; //rufoof
 
 const getInitialAuth = () => {
     return new Promise((resolve, reject) => {
@@ -66,6 +68,7 @@ const getInitialAuth = () => {
             querystring.stringify({
                 grant_type: "client_credentials",
                 client_secret: "cfb6113dfb4ccba4da7fd18c4dd8da6d",
+                // client_secret: "207250e51846693d57b1b3bb7eb36a3e", //rufoof
                 client_id: "accounts_manager",
                 Platform: "Android",
             }),
