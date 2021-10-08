@@ -28,8 +28,8 @@ window.root = () => {
                 if (res === false) {
                     this.authenticated = false;
                     this.showLoading = false;
+                    return;
                 }
-                return;
             } catch (err) {
                 if (err.message.indexOf("(504) ") > -1 || err.message.indexOf("(502) ") > -1) {
                     this.authError = "بيانات الدخول خاطئة أو أنه لايوجد إتصال بالأنترنت!";

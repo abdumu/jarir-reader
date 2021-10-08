@@ -47,12 +47,12 @@ const http = axios.create({
     baseURL: "https://api.jarirreader.com",
     httpsAgent: new https.Agent({
         rejectUnauthorized: false,
+        KeepAlive: true,
     }),
 });
 http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
 http.defaults.headers.post["User-Agent"] = "okhttp/4.3.1";
 http.defaults.headers.post["Host"] = "api.jarirreader.com";
-http.defaults.headers.post["X-Request-Check"] = getRequestCheck();
 
 const getInitialAuth = () => {
     return new Promise((resolve, reject) => {
@@ -63,7 +63,6 @@ const getInitialAuth = () => {
 
         http.post(
             "/v5.0.1/login/token",
-            // "/oauth2.0/token.php",
             querystring.stringify({
                 grant_type: "client_credentials",
                 client_secret: "cfb6113dfb4ccba4da7fd18c4dd8da6d",
@@ -72,6 +71,9 @@ const getInitialAuth = () => {
             }),
             {
                 timeout: 10000,
+                headers: {
+                    "X-Request-Check": getRequestCheck(),
+                },
             }
         )
             .then((response) => {
@@ -93,13 +95,7 @@ const getInitialAuth = () => {
     });
 };
 
-const auth = (email, password, tries) => {
-    if (blank(tries)) {
-        currentTry = 1;
-    } else {
-        currentTry = tries;
-    }
-
+const auth = (email, password) => {
     return new Promise((resolve, reject) => {
         var settings = getSettings();
 
@@ -107,7 +103,7 @@ const auth = (email, password, tries) => {
             const expires = Number(settings.expires);
 
             if (expires > Date.now()) {
-                resolve(settings.auth);
+                resolve({ username: settings.username, auth: settings.auth, deviceName: settings.deviceName, deviceUID: settings.deviceUID });
                 return;
             }
         }
@@ -148,25 +144,26 @@ const auth = (email, password, tries) => {
                 const x_access = xAccess();
 
                 http.post(
-                    // "/login/v1.0/login.php",
                     "v5.0.1/login/login",
                     querystring.stringify({
                         access_token: initialToken,
-                        password: settings.password,
-                        email: settings.email,
-                        prev_access_token: x_access,
-                        appId: "1",
                         deviceUID: deviceUID,
+                        appId: "1",
+                        email: settings.email,
                         deviceName: deviceName,
+                        password: settings.password,
+                        prev_access_token: x_access,
                         Platform: "Android",
-                    })
+                    }),
+                    {
+                        timeout: 10000,
+                        headers: {
+                            "X-Request-Check": getRequestCheck(),
+                        },
+                    }
                 )
                     .then((response) => {
                         if (blank(response) || blank(response.data)) {
-                            if (currentTry < 3) {
-                                resolve(auth(settings.email, settings.password, currentTry + 1));
-                                return;
-                            }
                             const err = new Error("(505) Can not login! check your info! \nerror: null data");
                             err.code = 505;
                             reject(err);
@@ -183,7 +180,7 @@ const auth = (email, password, tries) => {
                             deviceUID: deviceUID,
                         });
 
-                        resolve(result.access_token);
+                        resolve({ username: username, auth: result.access_token, deviceName: deviceName, deviceUID: deviceUID });
                     })
                     .catch((error) => {
                         const err = new Error("(505) Can not login! check your info! \nerror: " + (error.message || error));
@@ -201,22 +198,27 @@ const getUserBooks = () => {
     return new Promise((resolve, reject) => {
         bInfo.start();
         return auth()
-            .then((accessToken) => {
+            .then((authResult) => {
                 const settings = getSettings();
                 if (
                     typeof settings === "undefined" ||
                     !settings.hasOwnProperty("books") ||
-                    (settings.hasOwnProperty("books") && settings.books.cached_at < Date.now() - 1000 * 60 * 10) /** TODO: 5 */
+                    (settings.hasOwnProperty("books") && settings.books.cached_at < Date.now() - 1000 * 60 * 10)
                 ) {
                     http.post(
-                        // "/v1/books/get-user-books",
                         "/v5.0.1/books/get-user-books",
                         querystring.stringify({
-                            access_token: accessToken,
+                            access_token: authResult.auth,
                             Platform: "Android",
-                            deviceName: settings.deviceName,
-                            deviceUID: settings.deviceUID,
-                        })
+                            deviceName: authResult.deviceName,
+                            deviceUID: authResult.deviceUID,
+                        }),
+                        {
+                            timeout: 10000,
+                            headers: {
+                                "X-Request-Check": getRequestCheck(),
+                            },
+                        }
                     )
                         .then((response) => {
                             var books = [];
