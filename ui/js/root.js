@@ -25,6 +25,11 @@ window.root = () => {
             var res;
             try {
                 res = await window.actions.pre_auth();
+                if (res === false) {
+                    this.authenticated = false;
+                    this.showLoading = false;
+                }
+                return;
             } catch (err) {
                 if (err.message.indexOf("(504) ") > -1 || err.message.indexOf("(502) ") > -1) {
                     this.authError = "بيانات الدخول خاطئة أو أنه لايوجد إتصال بالأنترنت!";

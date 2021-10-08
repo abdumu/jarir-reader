@@ -3,33 +3,81 @@ const querystring = require("querystring");
 const Book = require("./book");
 const bottomInfo = require("./bottom-info");
 const { existsSync, mkdirSync, createWriteStream } = require("fs");
-const { resolve: pathResolve } = require("path");
-const { getSettings, uuid, randomCompany, setSettings, clearResidue } = require("./helpers");
+const { resolve: pathResolve, resolve } = require("path");
+const { createHash } = require("crypto");
+const { getSettings, uuid, randomCompany, setSettings, clearResidue, blank, xAccess } = require("./helpers");
 const { getAppDataPath } = require("./cross-platform");
 const { unzipBook } = require("./decrypt");
 const bookGenerator = require("./book-generator");
+const https = require("https");
+
+const getRequestCheck = () => {
+    const request_nonce = nonce();
+    const request_time = requestTime();
+
+    const buf = Buffer.from(
+        JSON.stringify({
+            nonce: request_nonce,
+            checksum: checksum(request_time, request_nonce),
+            timestamp: request_time,
+            platform: "android",
+        })
+    );
+    return buf.toString("base64");
+};
+
+const nonce = () => {
+    let n = "";
+    for (i = 0; i < 64; ++i) {
+        n += Math.floor(Math.random() * 10);
+    }
+
+    return n;
+};
+
+const checksum = (time, nonce) => {
+    return createHash("sha1").update(`${time}${nonce}5b38ff418618c39775c16b90f8637b6c`, "binary").digest("hex");
+};
+
+const requestTime = () => {
+    return (Date.now() / 1000) | 0;
+};
 
 const http = axios.create({
     baseURL: "https://api.jarirreader.com",
+    httpsAgent: new https.Agent({
+        rejectUnauthorized: false,
+    }),
 });
 http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+http.defaults.headers.post["User-Agent"] = "okhttp/4.3.1";
+http.defaults.headers.post["Host"] = "api.jarirreader.com";
+http.defaults.headers.post["X-Request-Check"] = getRequestCheck();
 
 const getInitialAuth = () => {
     return new Promise((resolve, reject) => {
+        var settings = getSettings();
+        if (!blank(settings) && settings.hasOwnProperty("initialToken") && settings.hasOwnProperty("expires")) {
+            resolve([settings.initialToken, settings.expires]);
+        }
+
         http.post(
-            "/oauth2.0/token.php",
+            "/v5.0.1/login/token",
+            // "/oauth2.0/token.php",
             querystring.stringify({
                 grant_type: "client_credentials",
                 client_secret: "cfb6113dfb4ccba4da7fd18c4dd8da6d",
                 client_id: "accounts_manager",
+                Platform: "Android",
             }),
             {
                 timeout: 10000,
             }
         )
             .then((response) => {
-                if (response.data.hasOwnProperty("access_token") && response.data.hasOwnProperty("expires_in")) {
+                if (response.data !== null && response.data.hasOwnProperty("access_token") && response.data.hasOwnProperty("expires_in")) {
                     resolve([response.data["access_token"], Date.now() + Number(response.data["expires_in"])]);
+                    return;
                 }
 
                 const err = new Error("(501) Could not retrieve initial access token!");
@@ -45,79 +93,100 @@ const getInitialAuth = () => {
     });
 };
 
-const auth = (email, password) => {
+const auth = (email, password, tries) => {
+    if (blank(tries)) {
+        currentTry = 1;
+    } else {
+        currentTry = tries;
+    }
+
     return new Promise((resolve, reject) => {
-        var auth = null;
+        var settings = getSettings();
 
-        var settings;
-        if (typeof email === "undefined") {
-            settings = getSettings();
+        if (!blank(settings) && settings.hasOwnProperty("auth") && !blank("auth")) {
+            const expires = Number(settings.expires);
 
-            if (settings === null || !(settings.hasOwnProperty("auth") && settings.hasOwnProperty("expires"))) {
-                const invalidErr = new Error("(503) auth & expires are not set! Please re-run the command again!");
-                invalidErr.code = 503;
-                reject(invalidErr);
+            if (expires > Date.now()) {
+                resolve(settings.auth);
                 return;
+            }
+        }
+
+        if (blank(settings)) {
+            settings = {};
+        }
+
+        try {
+            if (!blank(email)) {
+                settings.email = email;
             } else {
-                const expires = Number(settings.expires);
-                if (expires > Date.now()) {
-                    resolve(settings.auth);
-                    return;
-                } else {
-                    setSettings({
-                        auth: null,
-                        expires: null,
-                    });
-                    const invalidErr = new Error("(503) auth has expired! Please re-run the command again!");
-                    invalidErr.code = 503;
-                    reject(invalidErr);
-                    return;
+                if (typeof settings === "undefined" || blank(settings.email)) {
+                    reject(new Error("no info"));
                 }
             }
-        } else {
-            settings = {
-                email: email,
-                password: password,
-            };
+            if (!blank(password)) {
+                settings.password = password;
+            }
+        } catch (e) {
+            reject(new Error("no info"));
+            return;
         }
 
         return getInitialAuth()
             .then((initialAuth) => {
                 const [initialToken, expires] = initialAuth;
 
+                setSettings({
+                    initialToken: initialToken,
+                    expires: expires,
+                    password: settings.password,
+                    email: settings.email,
+                });
+
+                const deviceUID = settings.deviceUID || uuid().replace("-", "");
+                const deviceName = settings.deviceName || randomCompany();
+                const x_access = xAccess();
+
                 http.post(
-                    "/login/v1.0/login.php",
+                    // "/login/v1.0/login.php",
+                    "v5.0.1/login/login",
                     querystring.stringify({
                         access_token: initialToken,
                         password: settings.password,
                         email: settings.email,
+                        prev_access_token: x_access,
                         appId: "1",
-                        deviceUID: uuid().replace("-", ""),
-                        deviceName: randomCompany(),
+                        deviceUID: deviceUID,
+                        deviceName: deviceName,
+                        Platform: "Android",
                     })
                 )
                     .then((response) => {
-                        if (response.data.hasOwnProperty("result") && response.data.result.hasOwnProperty("access_token")) {
-                            auth = response.data["result"];
-                            var username = auth.user.fullName || auth.user.nickname;
-                            setSettings({
-                                username: username,
-                                auth: auth.access_token,
-                                expires: expires,
-                            });
-                        }
-
-                        if (auth.access_token === null) {
-                            const err = new Error("(504) Can not login! check your info! \nerror: " + error.message);
-                            err.code = 504;
+                        if (blank(response) || blank(response.data)) {
+                            if (currentTry < 3) {
+                                resolve(auth(settings.email, settings.password, currentTry + 1));
+                                return;
+                            }
+                            const err = new Error("(505) Can not login! check your info! \nerror: null data");
+                            err.code = 505;
                             reject(err);
                             return;
                         }
 
-                        resolve(auth.access_token);
+                        const result = response.data.result;
+                        var username = result.user.fullName || result.user.nickname;
+                        setSettings({
+                            username: username,
+                            auth: result.access_token,
+                            expires: expires,
+                            deviceName: deviceName,
+                            deviceUID: deviceUID,
+                        });
+
+                        resolve(result.access_token);
                     })
                     .catch((error) => {
-                        const err = new Error("(505) Can not login! check your info! \nerror: " + error.message);
+                        const err = new Error("(505) Can not login! check your info! \nerror: " + (error.message || error));
                         err.code = 505;
                         reject(err);
                     });
@@ -132,22 +201,26 @@ const getUserBooks = () => {
     return new Promise((resolve, reject) => {
         bInfo.start();
         return auth()
-            .then((auth) => {
-                const settings = getSettings("books");
+            .then((accessToken) => {
+                const settings = getSettings();
                 if (
                     typeof settings === "undefined" ||
                     !settings.hasOwnProperty("books") ||
                     (settings.hasOwnProperty("books") && settings.books.cached_at < Date.now() - 1000 * 60 * 10) /** TODO: 5 */
                 ) {
                     http.post(
-                        "/v1/books/get-user-books",
+                        // "/v1/books/get-user-books",
+                        "/v5.0.1/books/get-user-books",
                         querystring.stringify({
-                            access_token: auth,
+                            access_token: accessToken,
+                            Platform: "Android",
+                            deviceName: settings.deviceName,
+                            deviceUID: settings.deviceUID,
                         })
                     )
                         .then((response) => {
                             var books = [];
-                            if (response.data.hasOwnProperty("result")) {
+                            if (!blank(response.data) && response.data.hasOwnProperty("result")) {
                                 var bookPath, book;
                                 response.data.result.forEach((item, index) => {
                                     book = Book(
@@ -155,15 +228,11 @@ const getUserBooks = () => {
                                         item["title"],
                                         item["book_file_url"],
                                         index,
-                                        item["publisher"] || "جرير للنشر",
-                                        (
-                                            item["authors"] || {
-                                                name: "غير معروف",
-                                            }
-                                        ).flatMap((o) => o.name),
-                                        item["cover_url"] || null,
+                                        "جرير للنشر",
+                                        item["authors_name"] || ["غير معروف"],
+                                        item["cover_thumb_url"] || null,
                                         item["file_type"],
-                                        item["cover_thumb_url_162"] || item["cover_thumb_url_120"],
+                                        item["cover_thumb_url"],
                                         false
                                     );
                                     bookPath = pathResolve(

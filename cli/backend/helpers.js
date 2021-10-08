@@ -1,12 +1,22 @@
-const { v1: uuidv1 } = require("uuid");
 const { existsSync, readFileSync, writeFileSync, unlinkSync, rmdirSync, mkdirSync } = require("fs");
 const { resolve: pathResolve } = require("path");
 const { type: osType } = require("os");
 const { getAppDataPath } = require("./cross-platform");
 const { spawn } = require("child_process");
+const { randomBytes } = require("crypto");
 
 const uuid = () => {
-    return uuidv1();
+    return randomBytes(16).toString("hex");
+};
+const xAccess = () => {
+    return randomBytes(20).toString("hex");
+};
+
+const blank = (parameter) => {
+    if (typeof parameter === "undefined" || parameter === null || parameter === "") {
+        return true;
+    }
+    return false;
 };
 
 const randomCompany = () => {
@@ -119,7 +129,7 @@ const openExplorer = (path, callback) => {
 };
 
 const clearResidue = (book) => {
-    const path = pathResolve(getAppDataPath("jarir-cli"), "books", book.id);
+    const path = pathResolve(getAppDataPath("jarir-cli"), "books", "" + book.id);
     if (existsSync(path + ".zip")) {
         unlinkSync(path + ".zip");
     }
@@ -149,7 +159,7 @@ const nl2br = (str, rtl) => {
 };
 
 const getBookIndex = (book, item) => {
-    const path = pathResolve(getAppDataPath("jarir-cli"), "books", book.id, "Index", item + ".json");
+    const path = pathResolve(getAppDataPath("jarir-cli"), "books", "" + book.id, "Index", item + ".json");
     try {
         var json = readFileSync(path);
         json = JSON.parse(json);
@@ -210,4 +220,6 @@ module.exports = {
     logoutFromApp,
     getImage,
     getAppDataPath,
+    blank,
+    xAccess,
 };

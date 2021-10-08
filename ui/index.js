@@ -59,7 +59,11 @@ const createWindow = () => {
         if (action === "username") {
             return await getSettings("username");
         } else if (action === "pre_auth") {
-            return await auth();
+            if (getSettings("auth") || getSettings("initialToken")) {
+                return await auth();
+            } else {
+                return new Promise((resolve) => resolve(false));
+            }
         } else if (action === "logout") {
             logoutFromApp().then(() => {
                 mainWindow.close();

@@ -6,9 +6,9 @@ const bookGenerator = require("./backend/book-generator");
 
 const inquirerErrorLog = (error) => {
     if (error.isTtyError) {
-        console.log("Prompt couldn't be rendered in the current environment.\n");
+        inquirerErrorLog("Prompt couldn't be rendered in the current environment.\n");
     } else {
-        console.log((typeof error === "object" ? error.message : error) + "\n");
+        inquirerErrorLog((typeof error === "object" ? error.message : error) + "\n");
     }
     process.exit();
 };
@@ -35,7 +35,7 @@ const initiateCli = () => {
                 process.exit();
             }
         })
-        .catch((error) => inquirerErrorLog(error));
+        .catch((error) => console.log(error));
 };
 
 const askForCredentials = () => {
@@ -52,9 +52,12 @@ const askForCredentials = () => {
                 if (answers.savedLogin) {
                     getUserBooks()
                         .then((books) => {
+                            console.log(books);
                             askToSelectBook(books);
                         })
-                        .catch((error) => inquirerErrorLog(error));
+                        .catch((error) => {
+                            console.log(error);
+                        });
                 } else {
                     setSettings({
                         auth: null,
@@ -64,7 +67,7 @@ const askForCredentials = () => {
                     });
                 }
             })
-            .catch((error) => inquirerErrorLog(error));
+            .catch((error) => console.log(error));
     } else {
         inquirer
             .prompt([
@@ -103,9 +106,9 @@ const askForCredentials = () => {
                             askToSelectBook(books);
                         });
                     })
-                    .catch((error) => inquirerErrorLog(error));
+                    .catch((error) => console.log(error));
             })
-            .catch((error) => inquirerErrorLog(error));
+            .catch((error) => console.log(error));
     }
 };
 
@@ -140,7 +143,8 @@ const askToSelectBook = (books) => {
                 })
                 .catch((error) => inquirerErrorLogWithBook(book, error));
         })
-        .catch((error) => inquirerErrorLog(error));
+        .catch((error) => console.log(error));
 };
+// initiateCli();
 
 module.exports = initiateCli;
