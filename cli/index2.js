@@ -6,9 +6,9 @@ const bookGenerator = require("./backend/book-generator");
 
 const inquirerErrorLog = (error) => {
     if (error.isTtyError) {
-        inquirerErrorLog("Prompt couldn't be rendered in the current environment.\n");
+        console.error("Prompt couldn't be rendered in the current environment.\n");
     } else {
-        inquirerErrorLog((typeof error === "object" ? error.message : error) + "\n");
+        console.error((typeof error === "object" ? error.message : error) + "\n");
     }
     process.exit();
 };

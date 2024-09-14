@@ -3,7 +3,8 @@ const bottomInfo = require("./bottom-info");
 const StreamZip = require("node-stream-zip");
 
 const { resolve: pathResolve } = require("path");
-const Crypto = require("crypto");
+// const Crypto = require("crypto");
+const CryptoJS = require("crypto-js");
 const { inflateSync } = require("zlib");
 const { getAppDataPath } = require("./cross-platform");
 
@@ -82,8 +83,24 @@ const unzipBook = (book) => {
 
 const decryptBinary = (file) => {
     const key = new Int8Array(Buffer.from([115, -36, 110, -93, 78, -22, 63, -71, 97, -126, 86, 66, -36, 46, 13, -96]));
-    const cipher = Crypto.createDecipheriv("rc4", key, "");
-    let outputBuffer = cipher.update(readFileSync(file), null, "binary") + cipher.final("binary");
+    // const cipher = Crypto.createDecipheriv("rc4", key, "");
+    // let outputBuffer = cipher.update(readFileSync(file), null, "binary") + cipher.final("binary");
+
+    const keyHex = Array.from(keyArray).map(byte => {
+        const hex = (byte & 0xff).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+    
+    const keyNew = CryptoJS.enc.Hex.parse(keyHex);
+    const encryptedData = readFileSync(file, 'binary');
+    const encryptedWordArray = CryptoJS.enc.Latin1.parse(encryptedData);
+    const decrypted = CryptoJS.RC4.decrypt(
+        { ciphertext: encryptedWordArray },
+        key
+    );
+
+    const outputBuffer = CryptoJS.enc.Latin1.stringify(decrypted);
+
     writeFileSync(file + "x", outputBuffer, {
         encoding: "binary",
     });
@@ -91,9 +108,23 @@ const decryptBinary = (file) => {
 
 const decryptText = async (file) => {
     const key = new Int8Array(Buffer.from([115, -36, 110, -93, 78, -22, 63, -71, 97, -126, 86, 66, -36, 46, 13, -96]));
-    const cipher = Crypto.createDecipheriv("rc4", key, "");
+    // const cipher = Crypto.createDecipheriv("rc4", key, "");
+    // let outputBuffer = cipher.update(readFileSync(file), null, "binary") + cipher.final("binary");
+    const keyHex = Array.from(key).map(byte => {
+        const hex = (byte & 0xff).toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+    
+    const keyNew = CryptoJS.enc.Hex.parse(keyHex);
+    const encryptedData = readFileSync(file, 'binary');
+    const encryptedWordArray = CryptoJS.enc.Latin1.parse(encryptedData);
+    const decrypted = CryptoJS.RC4.decrypt(
+        { ciphertext: encryptedWordArray },
+        keyNew
+    );
 
-    let outputBuffer = cipher.update(readFileSync(file), null, "binary") + cipher.final("binary");
+    const outputBuffer = CryptoJS.enc.Latin1.stringify(decrypted);
+
     writeFileSync(file + "_x", outputBuffer, {
         encoding: "binary",
     });

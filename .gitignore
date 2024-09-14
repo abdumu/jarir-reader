@@ -159,3 +159,9 @@ deploy/\*\*
 # forge
 
 out/
+jarir_dump/
+flows_jarir
+jarir_dump.zip
+jarir.har
+code.c
+e

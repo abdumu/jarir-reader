@@ -53,8 +53,8 @@ const http = axios.create({
 });
 http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
 http.defaults.headers.post["User-Agent"] = "okhttp/4.3.1";
-http.defaults.headers.post["Host"] = "api.jarirreader.com";
-// http.defaults.headers.post["Host"] = "api.yaqut.me"; //rufoof
+http.defaults.headers.post["Host"] = "api.jarirreader.com";// hapi.jarirreader.rufoof.com for staging
+// http.defaults.headers.post["Host"] = "api.yaqut.me"; //hapi.rufoof.com for staging. rufoof
 
 const getInitialAuth = () => {
     return new Promise((resolve, reject) => {
@@ -63,8 +63,9 @@ const getInitialAuth = () => {
             resolve([settings.initialToken, settings.expires]);
         }
 
+
         http.post(
-            "/v5.0.1/login/token",
+            "/v7/login/token",
             querystring.stringify({
                 grant_type: "client_credentials",
                 client_secret: "cfb6113dfb4ccba4da7fd18c4dd8da6d",
@@ -142,12 +143,13 @@ const auth = (email, password) => {
                     email: settings.email,
                 });
 
+  
                 const deviceUID = settings.deviceUID || uuid().replace("-", "");
                 const deviceName = settings.deviceName || randomCompany();
                 const x_access = xAccess();
 
                 http.post(
-                    "v5.0.1/login/login",
+                    "v7/login/login",
                     querystring.stringify({
                         access_token: initialToken,
                         deviceUID: deviceUID,
@@ -209,7 +211,7 @@ const getUserBooks = () => {
                     (settings.hasOwnProperty("books") && settings.books.cached_at < Date.now() - 1000 * 60 * 10)
                 ) {
                     http.post(
-                        "/v5.0.1/books/get-user-books",
+                        "/v7/books/get-user-books",
                         querystring.stringify({
                             access_token: authResult.auth,
                             Platform: "Android",
@@ -227,6 +229,7 @@ const getUserBooks = () => {
                             var books = [];
                             if (!blank(response.data) && response.data.hasOwnProperty("result")) {
                                 var bookPath, book;
+
                                 response.data.result.forEach((item, index) => {
                                     book = Book(
                                         item["book_id"],
@@ -238,6 +241,11 @@ const getUserBooks = () => {
                                         item["cover_thumb_url"] || null,
                                         item["file_type"],
                                         item["cover_thumb_url"],
+                                        item["book_access"],
+                                        item["book_file_md5"],
+                                        item["bookfile_id"],
+                                        item["latest_file_id"],
+                                        item["size"],
                                         false
                                     );
                                     bookPath = pathResolve(
@@ -330,8 +338,9 @@ const downloadBook = (book) => {
             reject(err);
         });
 
+        //todo 403. 
         axios({
-            url: book.url,
+            url: book.url.replace("_sample", ""),
             method: "GET",
             responseType: "stream",
             headers: {
@@ -370,9 +379,56 @@ const downloadAndGenerateBook = async (book) => {
     });
 };
 
+//logout
+const logout = () => {
+    return new Promise((resolve, reject) => {
+        var settings = getSettings();
+
+        if (blank(settings) || !settings.hasOwnProperty("auth")) {
+            resolve(true);
+            return;
+        }
+
+
+        http.post(
+            "/v7/logout",
+            querystring.stringify({
+                access_token: getSettings("auth"),
+                deviceUID: getSettings("deviceUID"),
+                appId: "1",
+                Platform: "Android",
+            }),
+            {
+                timeout: 10000,
+                headers: {
+                    "X-Request-Check": getRequestCheck(),
+                },
+            }
+        )
+            .then((response) => {
+                if (response.data !== null && response.data.hasOwnProperty("result")) {
+                    resolve(response.data.result);
+                    return;
+                }
+
+                const err = new Error("(503) Could not logout! check your info!");
+                err.code = 503;
+
+                reject(err);
+            })
+            .catch((error) => {
+                const err = new Error("(504) Could not logout! check your info! \n error:" + error.message);
+                err.code = 504;
+                reject(err);
+            });
+        });
+};
+    
+
 module.exports = {
     auth,
     getUserBooks,
     downloadBook,
     downloadAndGenerateBook,
+    logout
 };

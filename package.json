@@ -5,7 +5,7 @@
   "description": "تحميل كتب قارئ جرير وتحويلها لكتب عادية غير مشفرة",
   "main": "ui/index.js",
   "scripts": {
-    "start": "electron-forge start",
+    "start": "electron-forge start -- --no-sandbox",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -21,6 +21,7 @@
     "forge": "./forge.config.js"
   },
   "dependencies": {
+    "crypto-js": "^4.2.0",
     "electron-squirrel-startup": "^1.0.0",
     "jarir-cli": "file:./cli"
   },

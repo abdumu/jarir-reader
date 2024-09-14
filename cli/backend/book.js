@@ -1,6 +1,6 @@
 const arabicTrans = require("./transliteration");
 
-function Book(id, name, url, index, publisher, authors, cover, type, thumb, bookPath) {
+function Book(id, name, url, index, publisher, authors, cover, type, thumb, access, file_md5, file_id, latest_file_id, size, bookPath) {
     if (typeof id === "object") {
         Object.assign(this, id);
         return this;
@@ -10,7 +10,7 @@ function Book(id, name, url, index, publisher, authors, cover, type, thumb, book
         if (typeof id === "object") {
             return new Book(id);
         } else {
-            return new Book(id, name, url, index, publisher, authors, cover, type, thumb, bookPath);
+            return new Book(id, name, url, index, publisher, authors, cover, type, thumb, access, file_md5, file_id, latest_file_id, size, bookPath);
         }
     }
 
@@ -21,7 +21,7 @@ function Book(id, name, url, index, publisher, authors, cover, type, thumb, book
     this.id = id;
     this.value = index;
     this.title = name;
-    this.url = url;
+    this.url = url; // this is a sample now
     this.type = type;
     this.short = this.id;
     this.publisher = publisher;
@@ -30,6 +30,13 @@ function Book(id, name, url, index, publisher, authors, cover, type, thumb, book
     this.thumb = thumb;
     this.bookPath = bookPath;
     this.name = this.id + { pdf: "🟥", epub: "📗", mp3: "🔉 mp3", "-": "" }[this.type] + ": " + arabicTrans(this.title) + "  (" + this.title + ")";
+    //new items
+    this.access = access || 0;
+    this.file_md5 = file_md5 || "";
+    this.file_id = file_id || 0;
+    this.latest_file_id = latest_file_id || 0;
+    this.size = size || 0;
+
 }
 
 Book.prototype.urlFilename = function urlFilename() {

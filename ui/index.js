@@ -1,7 +1,7 @@
 const { app, BrowserWindow, ipcMain, shell, dialog } = require("electron");
 const { existsSync } = require("fs");
 const path = require("path");
-const { auth, getUserBooks, downloadAndGenerateBook, getAppDataPath, getSettings, logoutFromApp, initiateCli } = require("jarir-cli");
+const { auth, getUserBooks, downloadAndGenerateBook, getAppDataPath, getSettings, logoutFromApp, initiateCli, logout } = require("jarir-cli");
 
 if (require("electron-squirrel-startup")) {
     app.quit();
@@ -65,6 +65,7 @@ const createWindow = () => {
                 return new Promise((resolve) => resolve(false));
             }
         } else if (action === "logout") {
+            logout(); // to remove device from devices list, since jarir app have devices limit
             logoutFromApp().then(() => {
                 mainWindow.close();
             });

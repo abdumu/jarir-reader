@@ -20,7 +20,29 @@ const blank = (parameter) => {
 };
 
 const randomCompany = () => {
-    items = ["Google Nexus 6", "Google Pixel 2", "Google Pixel 3", "Samsung Note 4", "Samsung S9", "Samsung S20", "Samsung S10"];
+    const items = [
+        "Google Nexus 6",
+        "Google Pixel 2",
+        "Google Pixel 3",
+        "Google Pixel 4",
+        "Google Pixel 5",
+        "Google Pixel 6",
+        "Google Pixel 7",
+        "Google Pixel 8",
+        "Samsung Note 4",
+        "Samsung Galaxy S9",
+        "Samsung Galaxy S10",
+        "Samsung Galaxy S20",
+        "Samsung Galaxy S21",
+        "Samsung Galaxy S22",
+        "Samsung Galaxy S23",
+        "Samsung Galaxy Note 20",
+        "OnePlus 7",
+        "OnePlus 8",
+        "OnePlus 9",
+        "OnePlus 10",
+        "OnePlus 11"
+    ];
     return items[Math.floor(Math.random() * items.length)];
 };
 
@@ -131,12 +153,12 @@ const openExplorer = (path, callback) => {
 const clearResidue = (book) => {
     const path = pathResolve(getAppDataPath("jarir-cli"), "books", "" + book.id);
     if (existsSync(path + ".zip")) {
-        unlinkSync(path + ".zip");
+        // unlinkSync(path + ".zip");
     }
     if (existsSync(path)) {
-        rmdirSync(path, {
-            recursive: true,
-        });
+        // rmdirSync(path, {
+        //     recursive: true,
+        // });
     }
 };
 
