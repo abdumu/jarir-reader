@@ -1,6 +1,6 @@
 const inquirer = require("inquirer");
 const { CredentialsAreSet, setSettings, clearResidue } = require("./backend/helpers");
-const { getUserBooks, downloadBook } = require("./backend/api-calls");
+const { getUserBooks, downloadBook, downloadAndGenerateBook } = require("./backend/api-calls");
 const { unzipBook } = require("./backend/decrypt");
 const bookGenerator = require("./backend/book-generator");
 
@@ -52,7 +52,7 @@ const askForCredentials = () => {
                 if (answers.savedLogin) {
                     getUserBooks()
                         .then((books) => {
-                            console.log(books);
+                            // console.log(books);
                             askToSelectBook(books);
                         })
                         .catch((error) => {
@@ -127,20 +127,11 @@ const askToSelectBook = (books) => {
         ])
         .then(async (answers) => {
             const book = books[answers.book];
-            downloadBook(book)
-                .then((r1) => {
-                    unzipBook(book)
-                        .then((r2) => {
-                            bookGenerator(book)
-                                .then((r3) => {
-                                    console.log(`💕️ Your book is ready: "${r3}"\n`);
-                                    clearResidue(book);
-                                    process.exit();
-                                })
-                                .catch((error) => inquirerErrorLogWithBook(book, error));
-                        })
-                        .catch((error) => inquirerErrorLogWithBook(book, error));
-                })
+
+            downloadAndGenerateBook(book).then((r) => {
+                clearResidue(book);
+                process.exit();
+            })
                 .catch((error) => inquirerErrorLogWithBook(book, error));
         })
         .catch((error) => console.log(error));

@@ -153,12 +153,15 @@ const openExplorer = (path, callback) => {
 const clearResidue = (book) => {
     const path = pathResolve(getAppDataPath("jarir-cli"), "books", "" + book.id);
     if (existsSync(path + ".zip")) {
-        // unlinkSync(path + ".zip");
+        unlinkSync(path + ".zip");
+    }
+    if (existsSync(path + ".zip.body")) {
+        unlinkSync(path + ".zip.body");
     }
     if (existsSync(path)) {
-        // rmdirSync(path, {
-        //     recursive: true,
-        // });
+        rmdirSync(path, {
+            recursive: true,
+        });
     }
 };
 

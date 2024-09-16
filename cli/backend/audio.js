@@ -3,6 +3,7 @@ const { cleanFilename, getBookIndex } = require("./helpers");
 const { renameSync, writeFileSync, existsSync, mkdirSync } = require("fs");
 const { getAppDataPath } = require("./cross-platform");
 
+//TODO: fix for new version
 const bookAudioGenerator = (book, info) => {
     return new Promise((resolve, reject) => {
         //create directory

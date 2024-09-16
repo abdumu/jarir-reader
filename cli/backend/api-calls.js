@@ -7,7 +7,7 @@ const { resolve: pathResolve, resolve } = require("path");
 const { createHash } = require("crypto");
 const { getSettings, uuid, randomCompany, setSettings, clearResidue, blank, xAccess } = require("./helpers");
 const { getAppDataPath } = require("./cross-platform");
-const { unzipBook } = require("./decrypt");
+const { unzipBook, appendFiles } = require("./decrypt");
 const bookGenerator = require("./book-generator");
 const https = require("https");
 
@@ -62,7 +62,6 @@ const getInitialAuth = () => {
         if (!blank(settings) && settings.hasOwnProperty("initialToken") && settings.hasOwnProperty("expires")) {
             resolve([settings.initialToken, settings.expires]);
         }
-
 
         http.post(
             "/v7/login/token",
@@ -143,7 +142,6 @@ const auth = (email, password) => {
                     email: settings.email,
                 });
 
-  
                 const deviceUID = settings.deviceUID || uuid().replace("-", "");
                 const deviceName = settings.deviceName || randomCompany();
                 const x_access = xAccess();
@@ -292,9 +290,54 @@ const getUserBooks = () => {
     });
 };
 
+const getDownloadInfo = (book) => {
+    return new Promise((resolve, reject) => {
+        return auth()
+            .then((authResult) => {
+                http.post(
+                    "/v7/books/file/download",
+                    querystring.stringify({
+                        access_token: authResult.auth,
+                        file_id: book.file_id,
+                        Platform: "Android",
+                    }),
+                    {
+                        timeout: 10000,
+                        headers: {
+                            "X-Request-Check": getRequestCheck(),
+                        },
+                    }
+                )
+                    .then((response) => {
+                        // console.log(response);
+                        // console.log(response.data);
+                        if (!blank(response.data) && response.data.hasOwnProperty("result")) {
+                            if (response.data.result.hasOwnProperty("body") && response.data.result.hasOwnProperty("header") && response.data.result.body !== "") {
+                                book.url = response.data.result.body;
+                                book.header = response.data.result.header;
+                            }
+                            resolve(book);
+                            return;
+                        }
+
+                        const err = new Error("(800) Could not get download info! check your info!");
+                        err.code = 800;
+                        reject(err);
+                    })
+                    .catch((error) => {
+                        console.log(error);
+                        const err = new Error("(801) Could not get download info! check your info! \n error:" + error.message);
+                        err.code = 801;
+                        reject(err);
+                    });
+            })
+            .catch((error) => reject(error));
+    });
+};
+
 const downloadBook = (book) => {
     return new Promise((resolve, reject) => {
-        if (!(book instanceof Book) && !(typeof book === "object" && "title" in book)) {
+        if (!(book instanceof Book) && !(typeof book === "object" && "id" in book)) {
             const err = new Error("(700) Can not download book, has no valid book info!");
             err.code = 700;
             reject(err);
@@ -318,29 +361,38 @@ const downloadBook = (book) => {
         } catch (e) {
             bInfo.end();
             reject(e);
+            return;
         }
 
         const path = pathResolve(getAppDataPath("jarir-cli"), "books", book.id + ".zip");
 
         if (existsSync(path)) {
             bInfo.end();
-            resolve(path);
+            resolve(book);
             return;
         }
 
-        const writer = createWriteStream(path);
-        writer.on("finish", () => {
+        const isBody = book.url.endsWith(".body") && book.header !== "";
+        const writer = createWriteStream(isBody ? path + '.body' : path);
+
+        writer.on("finish", async () => {
             bInfo.end();
-            resolve(path);
+
+            if (isBody) {
+               const headerKey = await appendFiles(path + ".body", book.header, getSettings("auth"), path);
+               book.key = headerKey;
+               resolve(book);
+            } else {
+                resolve(book);
+            }
         });
         writer.on("error", (err) => {
             bInfo.end();
             reject(err);
         });
 
-        //todo 403. 
         axios({
-            url: book.url.replace("_sample", ""),
+            url: book.url,
             method: "GET",
             responseType: "stream",
             headers: {
@@ -361,15 +413,19 @@ const downloadBook = (book) => {
 
 const downloadAndGenerateBook = async (book) => {
     return new Promise((resolve, reject) => {
-        downloadBook(book)
-            .then((r1) => {
-                unzipBook(book)
-                    .then((r2) => {
-                        bookGenerator(book)
-                            .then((r3) => {
-                                resolve(r3);
-                                clearResidue(book);
-                                console.log(`💕️ Your book is ready: "${r3}"\n`);
+        getDownloadInfo(book)
+            .then((xbook) => {
+                downloadBook(xbook)
+                    .then((ybook) => {
+                        unzipBook(ybook)
+                            .then((r2) => {
+                                bookGenerator(book)
+                                    .then((r3) => {
+                                        resolve(r3);
+                                        clearResidue(book);
+                                        console.log(`💕️ Your book is ready: "${r3}"\n`);
+                                    })
+                                    .catch((error) => reject(error));
                             })
                             .catch((error) => reject(error));
                     })
@@ -388,7 +444,6 @@ const logout = () => {
             resolve(true);
             return;
         }
-
 
         http.post(
             "/v7/logout",
@@ -421,14 +476,13 @@ const logout = () => {
                 err.code = 504;
                 reject(err);
             });
-        });
+    });
 };
-    
 
 module.exports = {
     auth,
     getUserBooks,
     downloadBook,
     downloadAndGenerateBook,
-    logout
+    logout,
 };

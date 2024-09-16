@@ -161,6 +161,7 @@ deploy/\*\*
 out/
 jarir_dump/
 flows_jarir
+test
 jarir_dump.zip
 jarir.har
 code.c
