@@ -1,0 +1,37 @@
+{
+  "name": "jarir-reader",
+  "icon": "./ui/images/jarir-logo.png",
+  "version": "2.0.0",
+  "description": "تحميل كتب قارئ جرير وتحويلها لكتب عادية غير مشفرة",
+  "main": "ui/index.js",
+  "scripts": {
+    "start": "electron-forge start -- --no-sandbox",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\""
+  },
+  "keywords": [],
+  "author": {
+    "name": "abdumu",
+    "email": "saanina@gmail.com"
+  },
+  "license": "SEE LICENSE IN LICENSE",
+  "config": {
+    "forge": "./forge.config.js"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "electron-squirrel-startup": "^1.0.0",
+    "jarir-cli": "file:./cli"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.61",
+    "@electron-forge/maker-deb": "^6.0.0-beta.61",
+    "@electron-forge/maker-dmg": "^6.0.0-beta.61",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.61",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.61",
+    "@electron-forge/publisher-github": "^6.0.0-beta.61",
+    "electron": "^16.0.0"
+  }
+}

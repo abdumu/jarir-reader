@@ -1,4 +1,4 @@
-## Unofficial Jarir-Reader قارئ جرير للكمبيوتر - غير رسمي
+## Unofficial Jarir/Rufoof Reader قارئ جرير / رفوف للكمبيوتر - غير رسمي
 
 View/download your purchased books from Jarir Reader and convert them to DRM-free books
 

@@ -1,0 +1,25 @@
+[package]
+name = "tauri-plugin-sharesheet"
+version = "0.0.1"
+description = "Share content with the Android Sharesheet and iOS Share Pane."
+edition = "2021"
+authors = ["Matt Gabrenya", "Build Your Web App", "matt@buildyourweb.app"]
+license = "MIT"
+repository = "https://github.com/buildyourwebapp/tauri-plugin-sharesheet"
+links = "tauri-plugin-sharesheet"
+
+
+[package.metadata.docs.rs]
+rustc-args = [ "--cfg", "docsrs" ]
+rustdoc-args = [ "--cfg", "docsrs" ]
+
+[build-dependencies]
+tauri-plugin = { version = "2.0.0-rc", features = [ "build" ] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = "2.0.0-rc"
+log = "0.4"
+thiserror = "1"
+serde_repr = "0.1"
