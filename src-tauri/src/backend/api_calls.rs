@@ -59,21 +59,110 @@ fn get_base_url(app_type: &str) -> String {
 
 fn nonce() -> String {
     let mut rng = rand::thread_rng();
-    (0..64).map(|_| rng.gen_range(0..10).to_string()).collect()
+    let mut sb = String::with_capacity(64);
+    for _ in 0..64 {
+        sb.push_str(&rng.gen_range(0..10).to_string());
+    }
+    sb
+}
+
+#[derive(Debug, Clone, Copy)]
+enum Operation {
+    MULTIPLY,
+    DIVIDE,
+    ADD,
+    SUBTRACT,
+    MODULE,
+}
+
+fn generate_secret() -> String {
+    const COMPOSITION_LOCAL_MAP_KEY: i32 = 202;
+    const PROVIDER_MAPS_KEY: i32 = 204;
+
+    let left_operands: Vec<i32> = vec![
+        17, 106, COMPOSITION_LOCAL_MAP_KEY, PROVIDER_MAPS_KEY, 106, PROVIDER_MAPS_KEY, 96, 106,
+        33, 96, 25, 17, 49, 33, 27, 33, 13, 194, 7, 25, 106, 106, 19, 13, 25, 5, 13,
+        COMPOSITION_LOCAL_MAP_KEY, 200, 49, 96, 28,
+    ];
+    let right_operands: Vec<i32> = vec![
+        3, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 3, 2, 3, 2, 3, 4, 2, 7, 2, 2, 2, 3, 4, 2, 11, 4, 2,
+        2, 2, 2, 2,
+    ];
+    let operations: Vec<Operation> = vec![
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+        Operation::DIVIDE,
+        Operation::MULTIPLY,
+    ];
+
+    let mut secret = String::new();
+    for i in 0..operations.len() {
+        let left = left_operands[i];
+        let right = right_operands[i];
+        let op = operations[i];
+        let result = match op {
+            Operation::MULTIPLY => left * right,
+            Operation::DIVIDE => left / right,
+            Operation::ADD => left + right,
+            Operation::SUBTRACT => left - right,
+            Operation::MODULE => left % right,
+        };
+        secret.push(std::char::from_u32(result as u32).unwrap_or('\0'));
+    }
+    secret
+}
+
+fn byte_array_to_hex_string(bytes: &[u8]) -> String {
+    bytes.iter().fold(String::new(), |mut result, &byte| {
+        let hex = format!("{:x}", (byte as u16) + 256);
+        result.push_str(&hex[1..]);
+        result
+    })
 }
 
 fn checksum(time: u64, nonce: &str) -> String {
-    let string = format!("{}{}5b38ff418618c39775c16b90f8637b6c", time, nonce);
+    let secret = generate_secret(); 
+    println!("Generated secret: {:?}", secret); 
+    
+    let string = format!("{}{}{}", time, nonce, secret);
+    println!("Checksum input: {}", string); 
+    
     let mut hasher = Sha1::new();
     hasher.update(string.as_bytes());
     let result = hasher.finish();
 
-    result
-        .iter()
-        .fold(String::with_capacity(40), |mut acc, &byte| {
-            write!(&mut acc, "{:02x}", byte).unwrap();
-            acc
-        })
+    let hex_result = byte_array_to_hex_string(&result);
+    println!("Calculated checksum: {}", hex_result); 
+    
+    hex_result
 }
 
 fn request_time() -> u64 {
@@ -86,14 +175,21 @@ fn request_time() -> u64 {
 fn get_request_check() -> String {
     let request_nonce = nonce();
     let request_time = request_time();
+    println!("Nonce: {}, Time: {}", request_nonce, request_time); 
     let checksum = checksum(request_time, &request_nonce);
+    
     let json = json!({
         "nonce": request_nonce,
         "checksum": checksum,
-        "timestamp": request_time,
+        "timestamp": request_time.to_string(),
         "platform": "android"
     });
-    general_purpose::STANDARD.encode(json.to_string())
+    
+    println!("Request JSON: {}", json.to_string()); 
+    
+    let encoded = general_purpose::STANDARD_NO_PAD.encode(json.to_string().as_bytes());
+    println!("Request check: {}", encoded); 
+    encoded
 }
 
 pub async fn get_initial_auth(client: &Client) -> Result<(String, u64), String> {
@@ -119,7 +215,7 @@ pub async fn get_initial_auth(client: &Client) -> Result<(String, u64), String> 
             ("grant_type", "client_credentials"),
             ("client_secret", "cfb6113dfb4ccba4da7fd18c4dd8da6d"),
             ("client_id", "accounts_manager"),
-            ("Platform", "Android"),
+            ("platform", &"android".to_string()),
         ])
         .header("X-Request-Check", get_request_check())
         .header(HOST, get_base_url(app_type))
@@ -132,12 +228,22 @@ pub async fn get_initial_auth(client: &Client) -> Result<(String, u64), String> 
             )
         })?;
 
-    let response_data: HashMap<String, serde_json::Value> = response.json().await.map_err(|e| {
+    let response_text = response.text().await.map_err(|e| {
         format!(
-            "(502) Could not retrieve initial access token! \n error: {}",
+            "(502) Could not retrieve initial access token text! \n error: {}",
             e
         )
     })?;
+
+    println!("Token response: {}", response_text);
+
+    let response_data: HashMap<String, serde_json::Value> = serde_json::from_str(&response_text)
+        .map_err(|e| {
+            format!(
+                "(502) Could not parse initial access token JSON! \n error: {} \n text: {}",
+                e, response_text
+            )
+        })?;
 
     if let (Some(access_token), Some(expires_in)) = (
         response_data.get("access_token").and_then(|v| v.as_str()),
@@ -164,8 +270,6 @@ pub async fn auth(
     password: Option<&str>,
     app_type: Option<&str>,
 ) -> Result<AuthResult, String> {
-    // return Err(format!("auth: email: {:?}, password: {:?}, app_type: {:?}", email, password, app_type));
-
     let settings = get_settings(None).unwrap_or_default();
     if let Some(auth) = settings.get("auth").and_then(|v| v.as_str()) {
         if let Some(expires) = settings.get("expires").and_then(|v| v.as_u64()) {
@@ -241,7 +345,7 @@ pub async fn auth(
             ("deviceName", &device_name.to_string()),
             ("password", &password.to_string()),
             ("prev_access_token", &"x_access".to_string()),
-            ("Platform", &"Android".to_string()),
+            ("platform", &"android".to_string()),
         ])
         .header("X-Request-Check", get_request_check())
         .header(HOST, get_base_url(app_type))
@@ -249,10 +353,13 @@ pub async fn auth(
         .await
         .map_err(|e| format!("(505y) Can not login! check your info! \nerror: {}", e))?;
 
-    let response_data: HashMap<String, serde_json::Value> = response
-        .json()
-        .await
-        .map_err(|e| format!("(505x) Can not login! check your info! \nerror: {}", e))?;
+    let response_text = response.text().await
+        .map_err(|e| format!("(505x) Cannot read response text! \nerror: {}", e))?;
+    
+    println!("Auth response text: {}", response_text); 
+    
+    let response_data: HashMap<String, serde_json::Value> = serde_json::from_str(&response_text)
+        .map_err(|e| format!("(505x) Can not parse login response! \nerror: {} \ntext: {}", e, response_text))?;
 
     if let Some(result) = response_data.get("result") {
         let username = result
@@ -422,7 +529,7 @@ pub async fn get_user_books(client: &Client) -> Result<Vec<Book>, String> {
         ))
         .form(&[
             ("access_token", &auth_result.auth),
-            ("Platform", &"Android".to_string()),
+            ("platform", &"android".to_string()),
             ("deviceName", &auth_result.device_name),
             ("deviceUID", &auth_result.device_uid),
         ])
@@ -545,8 +652,6 @@ pub async fn get_user_books(client: &Client) -> Result<Vec<Book>, String> {
 
 pub async fn get_download_info(client: &Client, book: &Book) -> Result<DownloadInfo, String> {
     let auth_result = auth(client, None, None, None).await?;
-    //println!("auth_result: {:?}", auth_result);
-    //println!("book: {:?}", book);
 
     let response = client
         .post(format!(
@@ -556,7 +661,7 @@ pub async fn get_download_info(client: &Client, book: &Book) -> Result<DownloadI
         .form(&[
             ("access_token", &auth_result.auth),
             ("file_id", &book.file_id),
-            ("Platform", &"Android".to_string()),
+            ("platform", &"android".to_string()),
         ])
         .header("X-Request-Check", get_request_check())
         .header(HOST, get_base_url(&auth_result.app_type))
@@ -569,15 +674,12 @@ pub async fn get_download_info(client: &Client, book: &Book) -> Result<DownloadI
             )
         })?;
 
-    //println!("response: {:?}", response);
-
     let response_data: HashMap<String, serde_json::Value> = response.json().await.map_err(|e| {
         format!(
             "(801) Could not get download info! check your info! \n error: {}",
             e
         )
     })?;
-    //println!("response_data: {:?}", response_data);
 
     if let Some(result) = response_data.get("result") {
         let url = result
@@ -706,7 +808,6 @@ pub async fn download_and_generate_book(client: &Client, book_id: &str) -> Resul
 
     let downloaded_at = Utc::now().timestamp() as u64;
 
-    // Update book info in settings
     let settings = get_settings(None).unwrap_or_default();
     if let Some(books) = settings.get("books").and_then(|v| v.as_object()) {
         if let Some(items) = books.get("items").and_then(|v| v.as_array()) {
@@ -764,7 +865,7 @@ pub async fn logout(client: &Client) -> Result<bool, String> {
         "access_token": settings.get("auth").unwrap_or(&serde_json::Value::Null),
         "deviceUID": settings.get("deviceUID").unwrap_or(&serde_json::Value::Null),
         "appId": "1",
-        "Platform": "Android",
+        "platform": "android",
     });
 
     let response = client

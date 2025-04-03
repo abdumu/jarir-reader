@@ -1,6 +1,6 @@
 [package]
 name = "jarir-reader"
-version = "3.0.0"
+version = "3.0.1"
 description = "View/download your purchased books from Jarir Reader and convert them to DRM-free books"
 authors = ["Abdulrahman Mohammed"]
 edition = "2021"
