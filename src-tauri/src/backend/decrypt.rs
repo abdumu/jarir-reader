@@ -88,8 +88,7 @@ pub async fn read_book_info(book_file: &Path) -> Result<serde_json::Value, Decry
 }
 
 pub async fn unzip_book(book: Book) -> Result<Book, DecryptError> {
-    let output_folder = get_app_data_path(Some("books"))
-        .join(book.id.clone());
+    let output_folder = get_app_data_path(Some("books")).join(book.id.clone());
     if !output_folder.with_extension("zip").exists() {
         return Err(DecryptError::IoError(io::Error::new(
             io::ErrorKind::NotFound,
@@ -317,4 +316,8 @@ fn append_files(
 
 pub fn base64_decode(input: &str) -> Result<Vec<u8>, DecodeError> {
     general_purpose::STANDARD.decode(input)
+}
+
+pub fn base64_encode(input: &[u8]) -> String {
+    general_purpose::STANDARD.encode(input)
 }

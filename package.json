@@ -16,6 +16,7 @@
   "dependencies": {
     "@tauri-apps/api": "^1.6.0",
     "@tauri-apps/plugin-dialog": "^2.0.0-rc",
-    "@tauri-apps/plugin-log": "^2.0.0"
+    "@tauri-apps/plugin-log": "^2.0.0",
+    "@tauri-apps/plugin-opener": "^2.2.6"
   }
 }

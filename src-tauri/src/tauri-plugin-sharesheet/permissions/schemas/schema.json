@@ -49,7 +49,7 @@
           "minimum": 1.0
         },
         "description": {
-          "description": "Human-readable description of what the permission does. Tauri convention is to use <h4> headings in markdown content for Tauri documentation generation purposes.",
+          "description": "Human-readable description of what the permission does. Tauri convention is to use `<h4>` headings in markdown content for Tauri documentation generation purposes.",
           "type": [
             "string",
             "null"
@@ -111,7 +111,7 @@
           "type": "string"
         },
         "description": {
-          "description": "Human-readable description of what the permission does. Tauri internal convention is to use <h4> headings in markdown content for Tauri documentation generation purposes.",
+          "description": "Human-readable description of what the permission does. Tauri internal convention is to use `<h4>` headings in markdown content for Tauri documentation generation purposes.",
           "type": [
             "string",
             "null"
@@ -297,27 +297,32 @@
         {
           "description": "Enables the share_file command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-share-file"
+          "const": "allow-share-file",
+          "markdownDescription": "Enables the share_file command without any pre-configured scope."
         },
         {
           "description": "Denies the share_file command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-share-file"
+          "const": "deny-share-file",
+          "markdownDescription": "Denies the share_file command without any pre-configured scope."
         },
         {
           "description": "Enables the share_text command without any pre-configured scope.",
           "type": "string",
-          "const": "allow-share-text"
+          "const": "allow-share-text",
+          "markdownDescription": "Enables the share_text command without any pre-configured scope."
         },
         {
           "description": "Denies the share_text command without any pre-configured scope.",
           "type": "string",
-          "const": "deny-share-text"
+          "const": "deny-share-text",
+          "markdownDescription": "Denies the share_text command without any pre-configured scope."
         },
         {
-          "description": "This permission set configures which\nsharesheet features are by default exposed.\n\n#### Granted Permissions\n\nIt allows acccess to all sharesheet commands.\n\n",
+          "description": "This permission set configures which\nsharesheet features are by default exposed.\n\n#### Granted Permissions\n\nIt allows acccess to all sharesheet commands.\n\n\n#### This default permission set includes:\n\n- `allow-share-text`\n- `allow-share-file`",
           "type": "string",
-          "const": "default"
+          "const": "default",
+          "markdownDescription": "This permission set configures which\nsharesheet features are by default exposed.\n\n#### Granted Permissions\n\nIt allows acccess to all sharesheet commands.\n\n\n#### This default permission set includes:\n\n- `allow-share-text`\n- `allow-share-file`"
         }
       ]
     }

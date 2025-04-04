@@ -14,7 +14,6 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use std::fmt::Write as _;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
@@ -70,8 +69,11 @@ fn nonce() -> String {
 enum Operation {
     MULTIPLY,
     DIVIDE,
+    #[allow(dead_code)]
     ADD,
+    #[allow(dead_code)]
     SUBTRACT,
+    #[allow(dead_code)]
     MODULE,
 }
 
@@ -80,13 +82,42 @@ fn generate_secret() -> String {
     const PROVIDER_MAPS_KEY: i32 = 204;
 
     let left_operands: Vec<i32> = vec![
-        17, 106, COMPOSITION_LOCAL_MAP_KEY, PROVIDER_MAPS_KEY, 106, PROVIDER_MAPS_KEY, 96, 106,
-        33, 96, 25, 17, 49, 33, 27, 33, 13, 194, 7, 25, 106, 106, 19, 13, 25, 5, 13,
-        COMPOSITION_LOCAL_MAP_KEY, 200, 49, 96, 28,
+        17,
+        106,
+        COMPOSITION_LOCAL_MAP_KEY,
+        PROVIDER_MAPS_KEY,
+        106,
+        PROVIDER_MAPS_KEY,
+        96,
+        106,
+        33,
+        96,
+        25,
+        17,
+        49,
+        33,
+        27,
+        33,
+        13,
+        194,
+        7,
+        25,
+        106,
+        106,
+        19,
+        13,
+        25,
+        5,
+        13,
+        COMPOSITION_LOCAL_MAP_KEY,
+        200,
+        49,
+        96,
+        28,
     ];
     let right_operands: Vec<i32> = vec![
-        3, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 3, 2, 3, 2, 3, 4, 2, 7, 2, 2, 2, 3, 4, 2, 11, 4, 2,
-        2, 2, 2, 2,
+        3, 2, 2, 2, 2, 2, 2, 2, 3, 2, 2, 3, 2, 3, 2, 3, 4, 2, 7, 2, 2, 2, 3, 4, 2, 11, 4, 2, 2, 2,
+        2, 2,
     ];
     let operations: Vec<Operation> = vec![
         Operation::MULTIPLY,
@@ -149,19 +180,19 @@ fn byte_array_to_hex_string(bytes: &[u8]) -> String {
 }
 
 fn checksum(time: u64, nonce: &str) -> String {
-    let secret = generate_secret(); 
-    println!("Generated secret: {:?}", secret); 
-    
+    let secret = generate_secret();
+    // println!("Generated secret: {:?}", secret);
+
     let string = format!("{}{}{}", time, nonce, secret);
-    println!("Checksum input: {}", string); 
-    
+    // println!("Checksum input: {}", string);
+
     let mut hasher = Sha1::new();
     hasher.update(string.as_bytes());
     let result = hasher.finish();
 
     let hex_result = byte_array_to_hex_string(&result);
-    println!("Calculated checksum: {}", hex_result); 
-    
+    // println!("Calculated checksum: {}", hex_result);
+
     hex_result
 }
 
@@ -175,20 +206,20 @@ fn request_time() -> u64 {
 fn get_request_check() -> String {
     let request_nonce = nonce();
     let request_time = request_time();
-    println!("Nonce: {}, Time: {}", request_nonce, request_time); 
+    // println!("Nonce: {}, Time: {}", request_nonce, request_time);
     let checksum = checksum(request_time, &request_nonce);
-    
+
     let json = json!({
         "nonce": request_nonce,
         "checksum": checksum,
         "timestamp": request_time.to_string(),
         "platform": "android"
     });
-    
-    println!("Request JSON: {}", json.to_string()); 
-    
+
+    // println!("Request JSON: {}", json.to_string());
+
     let encoded = general_purpose::STANDARD_NO_PAD.encode(json.to_string().as_bytes());
-    println!("Request check: {}", encoded); 
+    // println!("Request check: {}", encoded);
     encoded
 }
 
@@ -235,7 +266,7 @@ pub async fn get_initial_auth(client: &Client) -> Result<(String, u64), String> 
         )
     })?;
 
-    println!("Token response: {}", response_text);
+    // println!("Token response: {}", response_text);
 
     let response_data: HashMap<String, serde_json::Value> = serde_json::from_str(&response_text)
         .map_err(|e| {
@@ -353,13 +384,20 @@ pub async fn auth(
         .await
         .map_err(|e| format!("(505y) Can not login! check your info! \nerror: {}", e))?;
 
-    let response_text = response.text().await
+    let response_text = response
+        .text()
+        .await
         .map_err(|e| format!("(505x) Cannot read response text! \nerror: {}", e))?;
-    
-    println!("Auth response text: {}", response_text); 
-    
+
+    // println!("Auth response text: {}", response_text);
+
     let response_data: HashMap<String, serde_json::Value> = serde_json::from_str(&response_text)
-        .map_err(|e| format!("(505x) Can not parse login response! \nerror: {} \ntext: {}", e, response_text))?;
+        .map_err(|e| {
+            format!(
+                "(505x) Can not parse login response! \nerror: {} \ntext: {}",
+                e, response_text
+            )
+        })?;
 
     if let Some(result) = response_data.get("result") {
         let username = result
@@ -919,7 +957,7 @@ pub async fn check_for_new_version(client: &Client) -> Result<serde_json::Value,
         response_data.get("published_at").and_then(|v| v.as_str()),
     ) {
         let current_version = env!("CARGO_PKG_VERSION");
-        println!("{} {}", tag_name, current_version);
+        // println!("{} {}", tag_name, current_version);
         if compare_versions(tag_name, current_version) {
             return Ok(json!({
                 "new_version": true,

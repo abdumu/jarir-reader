@@ -2,15 +2,20 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["*"],
+  "windows": [
+    "*"
+  ],
   "remote": {
-    "urls": ["https://*.jarirreader.com/*", "https://*.rufoof.com/*"]
+    "urls": [
+      "https://*.jarirreader.com/*",
+      "https://*.rufoof.com/*"
+    ]
   },
   "permissions": [
     "core:default",
     "dialog:default",
-    "shell:default",
     "sharesheet:allow-share-text",
-    "sharesheet:allow-share-file"
+    "sharesheet:allow-share-file",
+    "opener:default"
   ]
 }

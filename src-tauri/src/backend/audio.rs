@@ -26,8 +26,7 @@ pub async fn book_audio_generator(
     book: Book,
     info: Option<Value>,
 ) -> Result<PathBuf, BookAudioGeneratorError> {
-    let path = get_app_data_path(Some("books"))
-        .join(&book.title);
+    let path = get_app_data_path(Some("books")).join(&book.title);
     if !path.exists() {
         fs::create_dir_all(&path)?;
     }
@@ -91,7 +90,6 @@ pub async fn book_audio_generator(
     );
 
     let m3u8_path = get_app_data_path(Some("books"))
-
         .join(clean_filename(&book.title, " "))
         .join(clean_filename(&m3u8_filename, " "));
 

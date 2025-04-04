@@ -20,7 +20,6 @@ tauri-plugin-sharesheet = { path = "./src/tauri-plugin-sharesheet" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri-plugin-dialog = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
-tauri-plugin-shell = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v2" }
 os_info = "3.0"
 rand = "0.8"
 regex = "1.11.0"
@@ -28,7 +27,7 @@ tokio = { version = "1.40.0", features = ["full"] }
 epub-builder = "0.7.4"
 zip = "2.2.0"
 flate2 = "1.0"
-reqwest="0.12.8"
+reqwest = { version = "0.12.8", features = ["json"] }
 chrono = "0.4.38"
 uuid = { version = "1.10.0", features = ["v4"] }
 thiserror = "1.0.63"
@@ -37,3 +36,4 @@ base64 = "0.22.1"
 openssl = "0.10.66"
 rust-crypto = "0.2.36"
 app_dirs2 = "2.5.5"
+tauri-plugin-opener = "2.2.6"

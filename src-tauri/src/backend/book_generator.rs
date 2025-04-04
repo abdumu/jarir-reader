@@ -31,12 +31,11 @@ pub async fn book_generator(book: Book) -> Result<PathBuf, BookGeneratorError> {
             Ok(res.unwrap())
         }
         "pdf" => {
-            let new_path = get_app_data_path(Some("books"))
-                .join(format!(
-                    "{}.{}",
-                    book.title,
-                    info["r#type"].as_str().unwrap_or_default()
-                ));
+            let new_path = get_app_data_path(Some("books")).join(format!(
+                "{}.{}",
+                book.title,
+                info["r#type"].as_str().unwrap_or_default()
+            ));
             let old_path = get_app_data_path(Some("books"))
                 .join(&book.id)
                 .join("Text")

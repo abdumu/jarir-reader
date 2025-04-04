@@ -3,7 +3,7 @@ use reqwest::Client;
 use reqwest::ClientBuilder;
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, State};
-use tauri_plugin_shell::ShellExt;
+use tauri_plugin_opener::OpenerExt;
 
 mod backend;
 use crate::backend::api_calls::{
@@ -33,11 +33,8 @@ fn create_http_client() -> Client {
 #[tauri::command]
 fn visit_book(app_handle: AppHandle, book_id: String) {
     app_handle
-        .shell()
-        .open(
-            format!("https://jarirreader.com/book/{}/github-abdumu", book_id),
-            None,
-        )
+        .opener()
+        .open_url(format!("https://jarirreader.com/book/{}/github-abdumu", book_id),None::<&str>)
         .unwrap();
 }
 
@@ -50,8 +47,8 @@ async fn download_book(state: State<'_, HttpClient>, book_id: String) -> Result<
 }
 
 #[tauri::command]
-fn open_book(app_handle: AppHandle, file_path: String) {
-    app_handle.shell().open(&file_path, None).unwrap();
+fn open_file(app_handle: AppHandle, file_path: String) {
+    app_handle.opener().open_path(file_path, None::<&str>).unwrap();
 }
 
 #[tauri::command]
@@ -74,9 +71,6 @@ async fn get_books(state: State<'_, HttpClient>) -> Result<Vec<Book>, String> {
 #[tauri::command]
 fn base_action(app_handle: AppHandle, action: String) {
     match action.as_str() {
-        // "check_permissions" => {
-        //     app_handle.file_permissions().check_permissions().unwrap();
-        // }
         "close" => {
             app_handle.exit(0);
         }
@@ -85,8 +79,8 @@ fn base_action(app_handle: AppHandle, action: String) {
             let books_path = book_path_root.as_path();
             if books_path.exists() {
                 app_handle
-                    .shell()
-                    .open(&*books_path.to_string_lossy(), None)
+                    .opener()
+                    .open_path(books_path.to_string_lossy().to_string(), None::<&str>)
                     .unwrap();
             } else {
                 let window = app_handle.get_webview_window("main").unwrap();
@@ -97,8 +91,8 @@ fn base_action(app_handle: AppHandle, action: String) {
         }
         "devPage" => {
             app_handle
-                .shell()
-                .open("https://github.com/abdumu", None)
+                .opener()
+                .open_url("https://github.com/abdumu", None::<&str>)
                 .unwrap();
         }
         "BookPage" => {
@@ -112,7 +106,7 @@ fn base_action(app_handle: AppHandle, action: String) {
                 "rufoof" => "https://rufoof.com",
                 _ => "https://jarirreader.com",
             };
-            app_handle.shell().open(website, None).unwrap();
+            app_handle.opener().open_url(website, None::<&str>).unwrap();
         }
         "TOS" => {
             let app_type = get_settings(Some("app")).unwrap_or_else(|| {
@@ -125,7 +119,7 @@ fn base_action(app_handle: AppHandle, action: String) {
                 "rufoof" => "https://rufoof.com/privacy",
                 _ => "https://jarirreader.com/site/tos",
             };
-            app_handle.shell().open(website, None).unwrap();
+            app_handle.opener().open_url(website, None::<&str>).unwrap();
         }
         _ => {}
     }
@@ -133,7 +127,6 @@ fn base_action(app_handle: AppHandle, action: String) {
 
 #[tauri::command]
 async fn settings_action(action: String) -> Result<Value, String> {
-    //if action == "os" return current os, android else desktop
     if action == "os" {
         #[cfg(target_os = "android")]
         return Ok(Value::String("android".to_string()));
@@ -188,17 +181,16 @@ async fn logout_action(state: State<'_, HttpClient>) -> Result<(), String> {
     logout(client).await.map(|_| ()).map_err(|e| e.to_string())
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
+#[cfg(desktop)]
 pub fn run() {
-    let client = create_http_client();
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_shell::init())
-        .manage(HttpClient(client))
+        .manage(HttpClient(create_http_client()))
         .invoke_handler(tauri::generate_handler![
             visit_book,
             download_book,
-            open_book,
+            open_file,
             base_action,
             settings_action,
             auth_action,
@@ -208,10 +200,32 @@ pub fn run() {
             check_updates
         ]);
 
-    #[cfg(mobile)]
-    {
-        builder = builder.plugin(tauri_plugin_sharesheet::init());
-    }
+    builder
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+
+#[cfg(mobile)]
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    let client = create_http_client();
+    let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_sharesheet::init())
+        .plugin(tauri_plugin_opener::init())
+        .manage(HttpClient(client))
+        .invoke_handler(tauri::generate_handler![
+            visit_book,
+            download_book,
+            open_file,
+            base_action,
+            settings_action,
+            auth_action,
+            pre_auth_action,
+            logout_action,
+            get_books,
+            check_updates
+        ]);
 
     builder
         .run(tauri::generate_context!())

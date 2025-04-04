@@ -9,6 +9,8 @@ It allows acccess to all sharesheet commands.
 
 
 
+#### This default permission set includes the following:
+
 - `allow-share-text`
 - `allow-share-file`
 
